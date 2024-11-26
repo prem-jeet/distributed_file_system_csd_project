@@ -31,12 +31,13 @@ def upload():
     # Assign chunks to workers dynamically
     for i, chunk in enumerate(file_chunks):
         worker = workers[i % len(workers)]  # Round-robin assignment
-        assigned_chunks.append({'url': worker, 'endpoint': f"{worker}/store", 'chunk_id': chunk['chunk_id']})
+        worker_store_url = f"{worker}/store/{filename}"  # Include the filename in the URL
+        assigned_chunks.append({'url': worker, 'endpoint': worker_store_url, 'chunk_id': chunk['chunk_id']})
         
         # Send chunk to the worker
-        response = requests.post(f"{worker}/store", json=chunk)
+        response = requests.post(worker_store_url, json=chunk)
         if response.status_code != 200:
-            return jsonify({"error": f"Failed to store chunk {chunk['chunk_id']}"}), 500
+            return jsonify({"error": f"Failed to store chunk {chunk['chunk_id']} on worker {worker}"}), 500
 
     metadata[filename] = assigned_chunks
     return jsonify({"message": f"File '{filename}' uploaded successfully!", "chunks": assigned_chunks})

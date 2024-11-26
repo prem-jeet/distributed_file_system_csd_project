@@ -3,7 +3,7 @@ import os
 
 MASTER_NODE_URL = "http://127.0.0.1:55000"
 
-def split_file(file_path, chunk_size=30):
+def split_file(file_path, chunk_size=20):
     chunks = []
     with open(file_path, 'r') as f:
         data = f.read()
@@ -36,15 +36,18 @@ def download_file(filename, output_path):
     try:
         with open(output_path, 'w') as f:
             for chunk in chunks:
-                print(f"Downloading chunk from {chunk['url']}/retrieve/{chunk['chunkid']}")
-                chunk_response = requests.get(f"{chunk['url']}/retrieve/{chunk['chunkid']}")
+                worker_url = chunk['url']
+                chunk_id = chunk['chunk_id']
+                retrieve_url = f"{worker_url}/retrieve/{filename}/{chunk_id}"  # Updated URL
+                print(f"Downloading chunk from {retrieve_url}")
                 
+                chunk_response = requests.get(retrieve_url)
                 if chunk_response.status_code == 200:
                     chunk_data = chunk_response.json().get('data', '')
                     f.write(chunk_data)  # Write the chunk data to the output file
-                    print(f"Downloaded chunk from {chunk['url']}")
+                    print(f"Downloaded chunk from {worker_url}")
                 else:
-                    print(f"Error downloading chunk from {chunk['url']}. Status code: {chunk_response.status_code}")
+                    print(f"Error downloading chunk from {worker_url}. Status code: {chunk_response.status_code}")
         print(f"File '{filename}' downloaded successfully to {output_path}!")
     except Exception as e:
         print(f"Error during file download: {e}")
